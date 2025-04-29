@@ -34,13 +34,10 @@ const getShortCode= (): string => {
 
 
 export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
+    console.log(event)
     const httpMethod = event.requestContext.http.method;
-   
-    const tableName =  process.env.tableName;
-    console.log(httpMethod)
+    const tableName =  process.env.TABLE_NAME;
     // console.log(tableName)
-
-
     if (httpMethod === 'POST') {
         const body = event.body ? JSON.parse(event.body) : event.queryStringParameters
         if (!body) {
@@ -82,9 +79,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
                 statusCode: 201,
                 // status code for Created
                 body: JSON.stringify({
-                    shortCode: shortCode,
-                    longUrl: longUrl,
-                    note: "Please save shortCode"
+                    shortUrl: `https://${event.requestContext.domainName}/${event.requestContext.stage}/${shortCode}`
                 })
             }
         } catch(error) {

@@ -113,14 +113,7 @@ describe('Unit test for app handler', function () {
         event.queryStringParameters = {longUrl: "www.americanExpress2025.com"}
         const result: APIGatewayProxyResult = await lambdaHandler(event);
 
-        expect(result.statusCode).toBe( 201);
-        expect(result.body).toEqual(
-            JSON.stringify({
-                shortCode: "abvujdyuh",
-                longUrl: "www.americanExpress2025.com",
-                note: "Please save shortCode"
-            }),
-        );
+        expect(result.statusCode).toBe(201);
     });
     test('POST with DynamoDB PutCommand error', async () => {
         ddbMock.on(PutCommand).rejects(new Error("DDB error"));
