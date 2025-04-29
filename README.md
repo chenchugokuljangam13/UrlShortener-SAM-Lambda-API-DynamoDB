@@ -76,10 +76,23 @@ gokul-sam-url$ sam local start-api
 gokul-sam-url$ curl http://localhost:3000/
 ```
 
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. Edit the file by adding below.
+The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. Edit the file by adding below. It will DDb table and API gateWay
 
 ```yaml
     Resources:
+        UrlShortenerTable:
+          Type: AWS::DynamoDB::Table
+          Properties:
+            TableName: UrlShortener-JCG
+            AttributeDefinitions:
+              - AttributeName: "short_code"
+                AttributeType: "S"
+            KeySchema:
+              - AttributeName: "short_code"
+                KeyType: HASH
+            ProvisionedThroughput:
+              ReadCapacityUnits: 5
+              WriteCapacityUnits: 5
         MyHttpApi:
           Type: AWS::Serverless::HttpApi
           Properties:
@@ -96,17 +109,23 @@ The SAM CLI reads the application template to determine the API's routes and the
         UrlShortener:
               Events:
                 Redirect:
-                  Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+                  Type: HttpApi
                   Properties:
                     ApiId: !Ref MyHttpApi
                     Path: /redirect
                     Method: get
                 Shortener:
-                  Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+                  Type: HttpApi
                   Properties:
                     ApiId: !Ref MyHttpApi
                     Path: /shortener
                     Method: post
+              Policies:
+                - DynamoDBCrudPolicy:
+                    TableName: UrlShortener-JCG
+              Environment:
+                Variables:
+                  TABLE_NAME: !Ref UrlShortenerTable
 ```
 
 ## Add a resource to your application
@@ -133,6 +152,7 @@ gokul-sam-url$ cd url-shortener
 url-shortener$ npm install
 url-shortener$ npm run test
 ```
+![Test Cases](TestCases.png)
 
 ## Cleanup
 
