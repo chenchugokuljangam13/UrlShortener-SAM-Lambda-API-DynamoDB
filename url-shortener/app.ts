@@ -27,46 +27,48 @@ const getShortCode= (): string => {
         const randomInd = Math.floor(Math.random() * chars.length);
         res += chars.charAt(randomInd);
     }
+    console.log("res")
     return res;
 }
 
 
 
 export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
-    console.log(event)
     const httpMethod = event.requestContext.http.method;
-    let body;
-    if(event.queryStringParameters) {
-        body = event.queryStringParameters
-    } else if (event.body) {
-        body = JSON.parse(event.body);
-    }
+    const body = event.body ? JSON.parse(event.body) : event.queryStringParameters
     if (!body) {
         return {
-            statusCode:400, // Status code for Invalid request
+            statusCode:400,
+            // Status code for Invalid request
             body: JSON.stringify({
                 error: "Please give query"
             })
         }
     }
     const tableName =  process.env.tableName;
-    console.log(event)
     console.log(httpMethod)
     console.log(body)
-    console.log(tableName)
+    // console.log(tableName)
 
 
     if (httpMethod === 'POST') {
         const longUrl = body.longUrl;
         if (!longUrl) {
             return {
-                statusCode: 400, // Status code for Invalid or Bad Request
+                statusCode: 400,
+                // Status code for Invalid or Bad Request
                 body: JSON.stringify({
                     error: "Please enter the URL"
                 })
             }
         }
-        const shortCode = getShortCode();
+        let shortCode;
+        if (body.shortCode){
+            shortCode = body.shortCode
+        } else {
+            shortCode = getShortCode();
+        }
+        
         const params = {
             TableName: tableName,
             Item: {
@@ -77,18 +79,20 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         try {
             await docClient.send(new PutCommand(params));
             return {
-                statusCode: 201, // status code for Created
+                statusCode: 201,
+                // status code for Created
                 body: JSON.stringify({
                     shortCode: shortCode,
                     longUrl: longUrl,
-                    note: "Please save shortcode"
+                    note: "Please save shortCode"
                 })
             }
         } catch(error) {
             return {
-                statusCode: 500, // status code for Internal Server Error
+                statusCode: 500,
+                // status code for Internal Server Error
                 body: JSON.stringify({
-                    error: error
+                    error: "Internal Server Error"
                 })
             }
         }
@@ -97,9 +101,10 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
         console.log(shortCode)
         if (!shortCode) {
             return {
-                statusCode: 402, // status code for Not Found
+                statusCode: 400,
+                // status code for Bad request
                 body: JSON.stringify({
-                    error: "Please enter shortcode"
+                    error: "Please enter shortCode"
                 })
             }
         }
@@ -114,32 +119,37 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             console.log(record)
             if (!record.Item) {
                 return {
-                    statusCode: 404, // status code for Not Found
+                    statusCode: 400,
+                    // status code for Not Found
                     body: JSON.stringify({
-                        error: "Record not found please give valid shortcode"
+                        error: "Record not found please give valid shortCode"
                     })
                 }
             }
-            const longUrl = record.Item.long_url;
             return {
-                statusCode: 302, // status code for Found
+                statusCode: 302,
+                // status code for Found
                 headers: {
-                    Location: longUrl
+                    Location: record.Item.long_url
                 },
-                body: ""
+                body: JSON.stringify({
+                    longUrl: record.Item.long_url
+                })
             }
         } catch(error) {
             return {
-                statusCode: 500, // status code for Internal Server Error
+                statusCode: 500,
+                // status code for Internal Server Error
                 body: JSON.stringify({
-                    error: error
+                    error: "Internal server error"
                 })
             }
         }
 
     }
     return {
-        statusCode: 405, // status code for Method Not Allowed
+        statusCode: 405,
+        // status code for Method Not Allowed
         body: JSON.stringify({
             error: "This method is not allowed"
         })
