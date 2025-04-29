@@ -76,15 +76,37 @@ gokul-sam-url$ sam local start-api
 gokul-sam-url$ curl http://localhost:3000/
 ```
 
-The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. The `Events` property on each function's definition includes the route and method for each path.
+The SAM CLI reads the application template to determine the API's routes and the functions that they invoke. Edit the file by adding below.
 
 ```yaml
-      Events:
-        HelloWorld:
-          Type: Api
+    Resources:
+        MyHttpApi:
+          Type: AWS::Serverless::HttpApi
           Properties:
-            Path: /hello
-            Method: get
+            StageName: prod
+            CorsConfiguration:
+              AllowOrigins:
+                - '*'
+              AllowHeaders:
+                - Content-Type
+              AllowMethods:
+                - GET
+                - POST
+                - OPTIONS
+        UrlShortener:
+              Events:
+                Redirect:
+                  Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+                  Properties:
+                    ApiId: !Ref MyHttpApi
+                    Path: /redirect
+                    Method: get
+                Shortener:
+                  Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+                  Properties:
+                    ApiId: !Ref MyHttpApi
+                    Path: /shortener
+                    Method: post
 ```
 
 ## Add a resource to your application
