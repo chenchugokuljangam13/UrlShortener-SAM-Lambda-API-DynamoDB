@@ -35,23 +35,23 @@ const getShortCode= (): string => {
 
 export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResult> => {
     const httpMethod = event.requestContext.http.method;
-    const body = event.body ? JSON.parse(event.body) : event.queryStringParameters
-    if (!body) {
-        return {
-            statusCode:400,
-            // Status code for Invalid request
-            body: JSON.stringify({
-                error: "Please give query"
-            })
-        }
-    }
+   
     const tableName =  process.env.tableName;
     console.log(httpMethod)
-    console.log(body)
     // console.log(tableName)
 
 
     if (httpMethod === 'POST') {
+        const body = event.body ? JSON.parse(event.body) : event.queryStringParameters
+        if (!body) {
+            return {
+                statusCode:400,
+                // Status code for Invalid request
+                body: JSON.stringify({
+                    error: "Please give query"
+                })
+            }
+        }
         const longUrl = body.longUrl;
         if (!longUrl) {
             return {
@@ -97,7 +97,7 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
             }
         }
     }else if (httpMethod === 'GET'){
-        const shortCode = body.shortCode;
+        const shortCode = event?.pathParameters?.shortCode
         console.log(shortCode)
         if (!shortCode) {
             return {

@@ -36,20 +36,10 @@ describe('Unit test for app handler', function () {
     beforeEach(() => {
         ddbMock.reset()
     })
-    // Body error case
-    test('verifies that user have given body/queryStringParameters or not', async () => {
-        event.requestContext.http.method = "GET"
-        const result = await lambdaHandler(event);
-        expect(result.statusCode).toBe(400);
-        expect(result.body).toEqual(
-            JSON.stringify({
-                error: `Please give query`
-            })
-        )
-    })
     // GET response test cases
     test('verifies if user not given shortcode in GET method', async() => {
-        event.queryStringParameters = {}
+        event.requestContext.http.method = "GET"
+        event.pathParameters = {shortCode: ""}
         const result: APIGatewayProxyResult = await lambdaHandler(event);
         expect(result.statusCode).toBe(400);
         expect(result.body).toEqual(
@@ -65,7 +55,7 @@ describe('Unit test for app handler', function () {
                 long_url: 'www.youtube.com'
             }
         })
-        event.queryStringParameters = {shortCode: "mwmHF4cA"}
+        event.pathParameters = {shortCode: "mwmHF4cA"}
         const result: APIGatewayProxyResult = await lambdaHandler(event);
         expect(result.statusCode).toBe(302);
         expect(result.headers).toEqual({
@@ -91,12 +81,22 @@ describe('Unit test for app handler', function () {
     test('GET with DynamoDB GetCommand error', async () => {
         ddbMock.on(GetCommand).rejects(new Error("DDB error"));
         event.requestContext.http.method = "GET";
-        event.queryStringParameters = { shortCode: "invalid" };
+        event.pathParameters = { shortCode: "invalid" };
         const result = await lambdaHandler(event);
         expect(result.statusCode).toBe(500);
         expect(result.body).toContain("Internal server error");
     });
     // POST response test cases
+    test('verifies that user have given body/queryStringParameters or not', async () => {
+        event.requestContext.http.method = "POST"
+        const result = await lambdaHandler(event);
+        expect(result.statusCode).toBe(400);
+        expect(result.body).toEqual(
+            JSON.stringify({
+                error: `Please give query`
+            })
+        )
+    })
     test('verifies if user not given longUrl in POST method', async() => {
         event.requestContext.http.method = "POST"
         event.queryStringParameters = {longUrl: ""}
@@ -142,4 +142,5 @@ describe('Unit test for app handler', function () {
             }),
         );
     });
+
 });
