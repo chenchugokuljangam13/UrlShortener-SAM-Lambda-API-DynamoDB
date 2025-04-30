@@ -36,6 +36,15 @@ Resources:
           - GET
           - POST
           - OPTIONS
+      Auth:
+        Authorizers:
+          MyCognitoAuthorizer:
+            IdentitySource: "$request.header.Authorization"
+            JwtConfiguration:
+              audience:
+                - "4c622v8bn1rs0godb6mva65ebi"
+              issuer: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_uiL5uJuXY
+        DefaultAuthorizer: MyCognitoAuthorizer
           
   UrlShortener:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -52,12 +61,16 @@ Resources:
             ApiId: !Ref MyHttpApi
             Path: /{shortCode}
             Method: get
+            Auth:
+              Authorizer: MyCognitoAuthorizer
         Shortener:
           Type: HttpApi # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             ApiId: !Ref MyHttpApi
             Path: /shortener
             Method: post
+            Auth:
+              Authorizer: MyCognitoAuthorizer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: UrlShortener-JCG
