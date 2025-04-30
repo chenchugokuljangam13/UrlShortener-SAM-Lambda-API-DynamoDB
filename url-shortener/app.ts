@@ -9,16 +9,6 @@ const docClient = DynamoDBDocumentClient.from(client);
 // Table name from DDB which is stored in Environment variables
 const tableName =  process.env.TABLE_NAME;
 
-/**
- *
- * Event doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format
- * @param {Object} event - API Gateway Lambda Proxy Input Format
- *
- * Return doc: https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
- * @returns {Object} object - API Gateway Lambda Proxy Output Format
- *
- */
-
 // Generate a random 8-character alphanumeric short code if not given
 const getShortCode= (): string => {
     let chars = "";
@@ -69,7 +59,6 @@ const postRequestHandler = async (event: APIGatewayProxyEventV2): Promise<APIGat
         await docClient.send(new PutCommand(params));
         return {
             statusCode: 201,
-            // status code for Created
             body: JSON.stringify({
                 shortUrl: `https://${event.requestContext.domainName}/${event.requestContext.stage}/${shortCode}`
             })
@@ -77,7 +66,6 @@ const postRequestHandler = async (event: APIGatewayProxyEventV2): Promise<APIGat
     } catch(error) {
         return {
             statusCode: 500,
-            // status code for Internal Server Error
             body: JSON.stringify({
                 error: "Internal Server Error"
             })
@@ -91,7 +79,6 @@ const getRequestHandler = async(event: APIGatewayProxyEventV2): Promise<APIGatew
     if (!shortCode) {
         return {
             statusCode: 400,
-                // status code for Bad request
             body: JSON.stringify({
              error: "Please enter shortCode"
             })
@@ -109,7 +96,6 @@ const getRequestHandler = async(event: APIGatewayProxyEventV2): Promise<APIGatew
         if (!record.Item) {
             return {
                 statusCode: 400,
-                // status code for Not Found
                 body: JSON.stringify({
                     error: "Record not found please give valid shortCode"
                 })
@@ -117,7 +103,7 @@ const getRequestHandler = async(event: APIGatewayProxyEventV2): Promise<APIGatew
         }
         return {
             statusCode: 302,
-            // status code for Found
+            // status code for Redirecting
             headers: {
                 Location: record.Item.long_url
             },
@@ -128,7 +114,6 @@ const getRequestHandler = async(event: APIGatewayProxyEventV2): Promise<APIGatew
     } catch(error) {
         return {
             statusCode: 500,
-            // status code for Internal Server Error
             body: JSON.stringify({
                 error: "Internal server error"
             })
@@ -142,8 +127,10 @@ export const lambdaHandler = async (event: APIGatewayProxyEventV2): Promise<APIG
     console.log(event)
     const httpMethod = event.requestContext.http.method;
     if (httpMethod === 'POST') {
+        // postRequestHandler handles the post request by using Event and it will return ShortCode
         return await postRequestHandler(event);
     }else if (httpMethod === 'GET'){
+        // getRequestHandler handles the get request by using Event and it will redirect to original url
         return await getRequestHandler(event);
     } else {
         return {

@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyEventV2, APIGatewayProxyResult } from 'aws-lambda';
-import { lambdaHandler } from '../../app';
+import { lambdaHandler } from '../../url-shortener/app';
 import { expect, describe, it, beforeEach, test } from '@jest/globals';
 import {mockClient} from 'aws-sdk-client-mock'
 import {DynamoDBDocumentClient, GetCommand, PutCommand} from '@aws-sdk/lib-dynamodb'
@@ -30,7 +30,7 @@ const event: APIGatewayProxyEventV2 =
             rawPath: '',
             rawQueryString: '',
             isBase64Encoded: false,
-            headers: {}
+            headers: {},
         };
 describe('Unit test for app handler', function () {
     beforeEach(() => {
@@ -108,9 +108,16 @@ describe('Unit test for app handler', function () {
             })
         )
     })
-    test('verifies successful response in POST method', async () => {
+    test('verifies successful response in POST method when long url is given by queryStringParameters', async () => {
         ddbMock.on(PutCommand).resolves({})
         event.queryStringParameters = {longUrl: "www.americanExpress2025.com"}
+        const result: APIGatewayProxyResult = await lambdaHandler(event);
+
+        expect(result.statusCode).toBe(201);
+    });
+    test('verifies successful response in POST method when long url is given by body', async () => {
+        ddbMock.on(PutCommand).resolves({})
+        event.body = JSON.stringify({longUrl: "www.americanExpress2025.com"})
         const result: APIGatewayProxyResult = await lambdaHandler(event);
 
         expect(result.statusCode).toBe(201);

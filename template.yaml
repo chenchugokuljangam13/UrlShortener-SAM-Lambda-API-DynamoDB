@@ -15,15 +15,14 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: UrlShortener-JCG
+      BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: "short_code"
           AttributeType: "S"
       KeySchema:
         - AttributeName: "short_code"
           KeyType: HASH
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
+      
   MyHttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
@@ -37,10 +36,11 @@ Resources:
           - GET
           - POST
           - OPTIONS
+          
   UrlShortener:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
-      CodeUri: url-shortener/
+      CodeUri: ./
       Handler: app.lambdaHandler
       Runtime: nodejs22.x
       Architectures:
@@ -71,4 +71,8 @@ Resources:
         Target: es2020
         Sourcemap: true
         EntryPoints:
-        - app.ts
+          - url-shortener/app.ts
+        External:
+          - '@aws-sdk/client-dynamodb'
+          - '@aws-sdk/lib-dynamodb'
+
